@@ -4,10 +4,9 @@ const fs = require("fs")
 const { exec, spawn, execSync } = require("child_process")
 const fetch = require('node-fetch')
 const ffmpeg = require("../lib/myffmpeg");
-const getRandom = (text) => {
-    return `${Math.floor(Math.random() * 10000)}${text}`
-}
+const googleTTS = require('google-tts-api');
 
+const getRandom = (text) => { return `${Math.floor(Math.random() * 10000)}${text}` }
 
 
 command(
@@ -38,13 +37,13 @@ command(
   
   //============================================================================================================================================
 command({ on: "text", fromMe: false,   }, async (message, match, m) => {
+  if (message.isGroup) return;
   const triggerKeywords = ["save", "send", "sent", "snt", "give", "snd"];
   const cmdz = match.toLowerCase().split(' ')[0];
 
   if (triggerKeywords.some(tr => cmdz.includes(tr))) {
     const su = message.jid.split('@')[0];
     const relayOptions = { messageId: m.quoted.key.id };
-
     if (config.SUDO.includes(su)) {
       await message.client.relayMessage(message.jid, m.quoted.message, relayOptions);
     } else {
@@ -54,10 +53,47 @@ command({ on: "text", fromMe: false,   }, async (message, match, m) => {
 });
 
 
+command(
+ {
+  pattern: "fwd",
+  fromMe: isPrivate,
+  desc: "Forwards the messsage to jid",
+  type: "tool",
+ },
+ async (message, match, m) => {
+    const relayOptions = { messageId: m.quoted.key.id };
+      await message.client.relayMessage(match, m.quoted.message, relayOptions);
+});
 
+command(
+  {
+    pattern: "fd",
+    fromMe: true,
+    desc: "Forwards the replied Message",
+    type: "Util",
+  },
+  async (message, match, m) => {
+    if(!m.quoted) return message.reply('Reply to something') 
+    let jids = parsedJid(match);
+    for (let i of jids) {
+      await message.forward(i, message.reply_message.message);
+    }   
+  }
+);
   //============================================================================================================================================
 
-  
+
+command(
+ {
+  pattern: "vv",
+  fromMe: isPrivate,
+  desc: "Forwards The View once messsage",
+  type: "tool",
+ },
+ async (message, match, m) => {
+function _0x3c2f(){const _0x454ae1=['590zvrRah','276MPUpfG','1030047bYOspa','client','132lPCSLj','quoted','72035GsMWwB','964995FMOqKn','77994EtoDcn','sendFile','594256umecHW','2DKkSmy','376328mtwIim','updateMediaMessage','133859YAuynf','56RBJvKE','buffer'];_0x3c2f=function(){return _0x454ae1;};return _0x3c2f();}const _0x136909=_0x9093;function _0x9093(_0x20e9c8,_0x4ae34e){const _0x3c2f3b=_0x3c2f();return _0x9093=function(_0x9093b,_0x280edf){_0x9093b=_0x9093b-0x1a3;let _0x5242e1=_0x3c2f3b[_0x9093b];return _0x5242e1;},_0x9093(_0x20e9c8,_0x4ae34e);}(function(_0x2f64e4,_0x467dcc){const _0x52b0a2=_0x9093,_0x1921f8=_0x2f64e4();while(!![]){try{const _0x48729d=parseInt(_0x52b0a2(0x1b0))/0x1+parseInt(_0x52b0a2(0x1a3))/0x2*(parseInt(_0x52b0a2(0x1ab))/0x3)+parseInt(_0x52b0a2(0x1b3))/0x4+parseInt(_0x52b0a2(0x1af))/0x5*(-parseInt(_0x52b0a2(0x1aa))/0x6)+-parseInt(_0x52b0a2(0x1a7))/0x7*(-parseInt(_0x52b0a2(0x1a4))/0x8)+parseInt(_0x52b0a2(0x1b1))/0x9*(-parseInt(_0x52b0a2(0x1a9))/0xa)+-parseInt(_0x52b0a2(0x1a6))/0xb*(parseInt(_0x52b0a2(0x1ad))/0xc);if(_0x48729d===_0x467dcc)break;else _0x1921f8['push'](_0x1921f8['shift']());}catch(_0x2b6a24){_0x1921f8['push'](_0x1921f8['shift']());}}}(_0x3c2f,0x80431));const {downloadMediaMessage}=require('@whiskeysockets/baileys'),buffer=await downloadMediaMessage(m[_0x136909(0x1ae)],_0x136909(0x1a8),{},{'reuploadRequest':message[_0x136909(0x1ac)][_0x136909(0x1a5)]});return await message[_0x136909(0x1b2)](buffer);
+ }
+);
   
   
   //============================================================================================================================================
@@ -75,123 +111,47 @@ command({ on: "text", fromMe: false,   }, async (message, match, m) => {
   
 
 
-   command
-       (
-           {
-               pattern: "tts ?(.*)",
-               fromMe: isPrivate,
-               desc: "Convert Text To Audio",
-               type: "misc",
-           },
-           async (message, match) => {
-               match = match || message.reply_message.text;
-       if (!match) return await message.reply("*_Need Text_*");
-       //var logox = MENTION_IMG.split(',') ;
-       //const image = logox[Math.floor(Math.random()*logox.length)];
-
-               
-               let tts = await getJson(`https://api.akuari.my.id/texttovoice/texttosound_english?query=${match}`)
-
-        const logo = await getBuffer("https://avatars.githubusercontent.com/u/64305844?v=4") 	
-        await message.client.sendMessage(message.jid, {
-               audio: { url: tts.result },
-               mimetype: 'audio/mpeg',
-               ptt: true,
-               waveform: ["00","99","00","99","00","99","00"],
-               contextInfo: {
-                   externalAdReply: {
-                       title: "ᴛᴇxᴛ ᴄᴏɴᴠᴇʀᴛᴇʀ",
-                       body: "ᴠᴏɪᴄᴇ : ▮▮▮▮▮▮▯▯▯",
-                       mediaType: 1,
-                       thumbnail: logo,
-                       mediaUrl: 'https://www.instagram.com/alienalfa',
-                       sourceUrl: 'https://www.instagram.com/alienalfa',
-                       }
+   command ({
+    pattern: "tts",
+    fromMe: isPrivate,  
+    desc: "google-tts",
+    type: "tool"
+    },
+    async (message,match) => {
+      if(!match) return await message.reply("waiting for a query")
+    let url = await googleTTS.getAudioUrl(match, {
+      lang: 'en',
+      slow: false,
+      host: 'https://translate.google.com',
+    });
+    let add = await process.env.EXTADREPLY === undefined ? process.env.EXTADREPLY : true
+    if(!add){
+    message.client.sendMessage(message.jid,{audio: {url: url}, mimetype: "audio/mpeg", fileName:"Aurora-Project-Tts.m4a"});
+    }
+    if(add){
+      
+    const logo = await getBuffer("https://avatars.githubusercontent.com/u/64305844?v=4") 	
+    return await message.client.sendMessage(message.jid, {
+           audio: { url: url },
+           mimetype: 'audio/mpeg',
+           ptt: true,
+           waveform: ["00","99","00","99","00","99","00"],
+           contextInfo: {
+               externalAdReply: {
+                   title: process.env.ADTITLE === undefined ? process.env.ADTITLE : "ᴛᴇxᴛ ᴄᴏɴᴠᴇʀᴛᴇʀ",
+                   body: process.env.ADBODY === undefined ? process.env.ADBODY : "ᴠᴏɪᴄᴇ : ▮▮▮▮▮▮▯▯▯",
+                   mediaType: 1,
+                   thumbnail: process.env.ADLOGO === undefined ? process.env.ADLOGO : logo,
+                   mediaUrl: process.env.ADURL === undefined ? process.env.ADURL : 'https://www.instagram.com/alienalfa',
+                   sourceUrl: process.env.ADSCURL === undefined ? process.env.ADSCURL : 'https://www.instagram.com/alienalfa',
                    }
                }
-           )	
-       }
-   );
-
-
-
-/*
-   command({ on: "text", fromMe: isPrivate }, async (message, match, m) => {
-    let cmdz = await match.split(' ')[0].toLowerCase();
-    let media;
+           }
+       )
+          }	
+      
+      });
     
-    switch (cmdz) {
-        case 'bass':
-        case 'blown':
-        case 'deep':
-        case 'earrape':
-        case 'fast':
-        case 'fat':
-        case 'nightcore':
-        case 'reverse':
-        case 'robot':
-        case 'slow':
-        case 'smooth':
-        case 'squirrel':
-            if (!message.reply_message.audio) {return message.sendMessage("_please reply to an audio..._");}
 
-
-            let ran = await getRandom(".mp3")
-            media = await m.quoted.download();
-                let set;
-                if (/bass/.test(cmdz)) set = '-af equalizer=f=54:width_type=o:width=2:g=20';
-                else if (/blown/.test(cmdz)) set = '-af acrusher=.1:1:64:0:log';
-                else if (/deep/.test(cmdz)) set = '-af atempo=4/4,asetrate=44500*2/3';
-                else if (/earrape/.test(cmdz)) set = '-af volume=12';
-                else if (/fast/.test(cmdz)) set = '-filter:a "atempo=1.63,asetrate=44100"';
-                else if (/fat/.test(cmdz)) set = '-filter:a "atempo=1.6,asetrate=22100"';
-                else if (/nightcore/.test(cmdz)) set = '-filter:a atempo=1.06,asetrate=44100*1.25';
-                else if (/reverse/.test(cmdz)) set = '-filter_complex "areverse"';
-                else if (/robot/.test(cmdz)) set = '-filter_complex "afftfilt=real=\'hypot(re,im)*sin(0)\':imag=\'hypot(re,im)*cos(0)\':win_size=512:overlap=0.75"';
-                else if (/slow/.test(cmdz)) set = '-filter:a "atempo=0.7,asetrate=44100"';
-                else if (/smooth/.test(cmdz)) set = '-filter:v "minterpolate=\'mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=120\'"';
-                else if (/tupai/.test(cmdz)) set = '-filter:a "atempo=0.5,asetrate=65100"';
-
-                message.quoted.sendMessage("_please wait..._");
-
-
-                exec(`ffmpeg -i ${media} ${set} ${ran}`, async (err, stderr, stdout) => {
-                    fs.unlinkSync(media);
-                    if (err) return message.sendMessage(err);
-let args = match.split(' ')
-let title = args.slice(1).join(' ')
-let filedd = fs.readFileSync(ran)
-let im = await getBuffer("https://avatars.githubusercontent.com/u/64305844?v=4")
-let results = await Writer(title, im, filedd)
-
-                    await message.client.sendMessage(message.jid, {
-                        audio: results,
-                        mimetype: 'audio/mpeg',
-                    }, {quoted : message})
-
-                    fs.unlinkSync(ran);
-                });
-
-
-            break;
-
-        // Add your other cases here...
-
-        default:
-            if (cmdz.startsWith('sound')) {
-                // Handle sound cases
-                media = await fetch(`https://github.com/DGXeon/Tiktokmusic-API/raw/master/tiktokmusic/${match}.mp3`);
-                await message.client.sendMessage(message.jid, { audio: media, mimetype: 'audio/mpeg', ptt: true });
-            }
-            break;
-    }
-});
-*/
-  //============================================================================================================================================
-  
-  
-
-  
-  
   //============================================================================================================================================
   
